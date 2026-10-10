@@ -1,1 +1,1 @@
-{"name":"computech-store","version":"1.0.0","private":true,"description":"ComputeCH 3D computer store","scripts":{"start":"node server.js"},"engines":{"node":">=18"}}
+{"name":"computech-store","version":"1.0.0","private":true,"description":"ComputeCH 3D computer store","scripts":{"start":"node server.js","build":"node scripts/build.cjs"},"engines":{"node":">=18"}}

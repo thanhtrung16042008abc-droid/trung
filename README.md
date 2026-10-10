@@ -1,25 +1,43 @@
-# ComputeCH | 3D Computer Store
+# ComputeCH — cửa hàng linh kiện 3D
 
-Đồ án cửa hàng linh kiện máy tính bằng tiếng Việt, có sẵn 29 sản phẩm mẫu thuộc nhiều nhóm linh kiện và thiết bị. Giao diện có hiệu ứng chuyển động khi cuộn, hiệu ứng hover và hình ảnh 3D tại bước thanh toán; cài đặt giảm chuyển động của hệ điều hành được tôn trọng. Chạy trực tiếp bằng Node.js (không cần cài thư viện ngoài), mở thư mục này trong Visual Studio Code.
+Website tiếng Việt có 29 sản phẩm mẫu, ảnh sản phẩm, mô hình 3D, giỏ hàng, đặt hàng COD, khu vực quản trị, quản lý kho và thống kê doanh thu. Dự án chạy ở máy cá nhân bằng Node.js hoặc triển khai lên Cloudflare Pages qua GitHub.
 
-## Chạy nhanh
+## Chạy trên máy với VS Code
 
 1. Cài Node.js 18 trở lên.
-2. Giải nén ZIP và mở thư mục `computech-store` bằng VS Code.
-3. Chọn **Terminal → New Terminal** rồi chạy `node server.js`.
-4. Truy cập http://localhost:3000.
-5. Trang quản trị: http://localhost:3000/#admin (mặc định `admin` / `change-this-before-demo`).
+2. Mở thư mục dự án `computech-store` trong Visual Studio Code.
+3. Chọn **Terminal → New Terminal**.
+4. Nhập `node server.js` rồi nhấn Enter.
+5. Mở `http://localhost:3000` trong trình duyệt.
+6. Mở trang quản trị ở `http://localhost:3000/#admin`. Tài khoản demo cục bộ là `admin`; mật khẩu là `change-this-before-demo`.
 
-Có thể chạy qua **Terminal → Run Build Task** (Ctrl+Shift+B), nhờ task đã thiết lập trong `.vscode/tasks.json`. Không cần `npm install`.
+Máy chủ cục bộ lưu sản phẩm và đơn hàng trong `data/store.json`. Tệp này được bỏ qua khi tải lên GitHub để không đưa dữ liệu khách hàng lên kho mã nguồn.
 
-Đổi mật khẩu admin trước khi trình diễn. Dữ liệu đơn hàng và sản phẩm được lưu trong `data/store.json`.
+## Đưa lên Cloudflare Pages bằng GitHub
+
+Repo hiện dùng: `https://github.com/thanhtrung16042008abc-droid/trung`, nhánh `main`.
+
+1. Trong Cloudflare, mở **Workers & Pages** → **Create application** → **Pages** → **Connect to Git**.
+2. Kết nối GitHub nếu Cloudflare hỏi, rồi chọn repo `trung` và nhánh `main`.
+3. Cấu hình bản dựng:
+   - Build command: `npm run build`
+   - Build output directory: `dist`
+   - Root directory: để trống
+4. Tạo dự án **D1 SQL Database** trong Cloudflare, ví dụ đặt tên `computech-store`.
+5. Mở dự án Pages → **Settings** → **Functions** → **D1 database bindings**. Thêm binding có tên biến `DB` và chọn database vừa tạo. Lưu rồi chạy lại deployment.
+6. Trong **Settings → Variables and Secrets**, thêm các biến môi trường:
+   - `ADMIN_USER`: tên đăng nhập quản trị do bạn tự chọn.
+   - `ADMIN_PASSWORD`: mật khẩu quản trị mạnh, riêng tư.
+   - `SESSION_SECRET`: chuỗi ngẫu nhiên dài, tối thiểu 32 ký tự.
+   - Có thể thêm `VNPAY_TMN_CODE` và `VNPAY_HASH_SECRET` khi VNPay cấp thông tin merchant.
+7. Lưu Secrets và tạo deployment mới. Khi mở trang lần đầu, API sẽ tự tạo bảng và nạp 29 sản phẩm mẫu vào D1.
+
+Các Secrets chỉ nhập trong trang cài đặt Cloudflare; không ghi chúng vào GitHub, mã trình duyệt hoặc gửi trong cuộc trò chuyện này. Nếu chưa gắn D1, API sẽ báo cần cấu hình D1; website không tự giả vờ lưu đơn hàng thành công.
 
 ## Thanh toán
 
-COD hoạt động ngay. Tích hợp VNPay có sẵn theo sandbox. Để cấu hình, sao chép `.env.example` thành `.env`, rồi điền `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET`, `VNPAY_RETURN_URL`; khởi động lại server. Trong cấu hình merchant VNPay, đặt IPN URL thành `https://<ten-mien>/api/payment/vnpay-ipn`. IPN kiểm tra chữ ký, mã đơn và số tiền trước khi xác nhận giao dịch; return URL chỉ báo kết quả cho người mua. Khi chạy trên localhost, VNPay không thể gọi ngược IPN, nên cần URL HTTPS công khai (hoặc tunnel được chấp nhận) để thử trọn luồng. Khi chưa cấu hình merchant, checkout thông báo rõ và không giả vờ rằng giao dịch đã được xác nhận. Không đưa secret vào mã phía trình duyệt. Thanh toán tiền thật cần tài khoản merchant được VNPay cấp quyền và cấu hình production riêng.
+COD dùng được sau khi D1 hoạt động. VNPay chỉ bật khi đã khai báo `VNPAY_TMN_CODE` và `VNPAY_HASH_SECRET` trong Cloudflare Secrets. URL trả kết quả mặc định tự lấy tên miền đang chạy; trong cấu hình merchant, dùng `https://TEN-MIEN/api/payment/vnpay-return` làm Return URL và `https://TEN-MIEN/api/payment/vnpay-ipn` làm IPN URL. Thử nghiệm và thanh toán tiền thật đều cần tài khoản merchant được VNPay cấp quyền và thông tin khóa tương ứng. Không đưa thông tin thẻ vào trang này; khách được chuyển sang cổng VNPay.
 
-## Ghi chú
+## Hình ảnh và chuyển động
 
-Ảnh chụp sản phẩm thật được tải từ các CDN của hãng/nhà bán, nên cần internet. Nếu một nguồn ảnh không phản hồi, hình vector dự phòng sẽ hiện thay thế. Mô hình PC ở trang đầu chạy bằng CSS nên vẫn chuyển động khi CDN không tải; mô hình xoay chi tiết trong cửa sổ sản phẩm dùng Three.js và cần internet. Trang thanh toán có thẻ 3D trang trí bằng CSS; đây chỉ là hình ảnh giao diện, không thu thập thông tin thẻ. Thanh toán VNPay được chuyển qua cổng VNPay khi merchant đã cấu hình. Khi ngoại tuyến, cửa hàng vẫn hiển thị và mua hàng bằng COD được.
-
-Đăng nhập admin được kiểm tra ở server, cookie HttpOnly. Đây là nền tảng demo cục bộ; trước khi triển khai internet cần HTTPS, lưu trữ dữ liệu bền vững (SQLite/MySQL), sao lưu và rà soát bảo mật.
+Hình ảnh sản phẩm lấy từ nguồn ảnh hãng/nhà bán; mô hình xoay 3D chi tiết tải Three.js qua CDN. Trang đầu, hiệu ứng cuộn, hover và thẻ thanh toán 3D được tạo bằng giao diện web. Cần internet để tải font, ảnh, mô hình Three.js và cổng VNPay.
