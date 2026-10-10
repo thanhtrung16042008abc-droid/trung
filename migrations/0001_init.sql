@@ -1,0 +1,1 @@
+-- Cloudflare D1 schema for products and orders.
